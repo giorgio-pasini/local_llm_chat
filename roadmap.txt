@@ -1,0 +1,372 @@
+<<I want to develop a react native application and I have no experience. I need full support and be guided step by step.
+I'll provide an application description and I want you to provide a thorough list of steps to follow in order to implement the entierity of this application.
+
+Here's the application description:
+
+The application is a desktop application written in React and Electron to run locally.
+The application allows to download a llm from huggingface, to run it and to query it using a graphical interface.
+The application will keep track of all the inputs and the outputs of the llm in two separate json files, keeping the metadata and the content created in the json format.
+The application allows to provide to the LLM a document in pdf or word or txt or jpeg or png format in order for it to read it or look at it and use it for the prompt.
+The interface is clean and userfriendly and mimics what's been done for chatgpt and other llm online services.
+The app is optimized in order to use the local graphic card if available and all the most important llm optimizations commonly used to make sure that the program runs smoothly.
+The app allows to inspect both the history of prompts and generations.
+Add the possibility to create, mantain and use a library of pre-made prompts that are used to quick start a specific kind of generation in order to avoid the need of re-writing everytime a specific preprompt in order to generate using a specific context.
+Concening the choice of the AI model to use, give the possibility to browse all huggingface models directly in the app or, alternatively, to just paste the model url to download it and then use it once ready (app waits and shows download progress) or again it gives the opportunity to just navigate locally and select the .safetensors file to use as llm.>>
+
+//think
+We are building a desktop application using React and Electron. The application will allow users to download and run LLMs from Hugging Face, interact via a chat interface, process documents, and maintain history and prompt libraries. 
+Here is a step-by-step, ordered list of tasks to complete the project:
+### Phase 1: Project Setup and Initialization
+1. **Set up the development environment**:
+   - Install Node.js (v18 or higher) and npm (v9 or higher).
+   - Install Git for version control.
+2. **Create the project structure**:
+   - Use `create-react-app` with TypeScript template to initialize the React part:  
+     `npx create-react-app llm-desktop-app --template typescript`
+   - Change into the project directory: `cd llm-desktop-app`
+   - Add Electron and Electron Forge:  
+     `npm install --save-dev electron electron-forge`
+   - Import the existing React app into Electron Forge:  
+     `npx electron-forge import`
+3. **Configure Electron Forge**:
+   - Update `forge.config.js` to set up the build configuration for Electron.
+   - Set the main entry point (e.g., `main.js`) for the Electron main process.
+4. **Set up the project structure**:
+   - Create the following directories:
+     - `src/main`: For Electron main process code.
+     - `src/renderer`: For React components (this is the existing `src` from create-react-app, but we can restructure if needed).
+     - `src/assets`: For static assets.
+5. **Configure TypeScript for Electron**:
+   - Create a `tsconfig.json` for the main process in `src/main` (if needed) and extend the existing one for the renderer.
+### Phase 2: Basic Electron Application Setup
+6. **Create the main process file** (`src/main/main.ts`):
+   - Write code to create a browser window that loads the React app (via `loadURL` for development and `loadFile` for production).
+   - Implement basic window management (open, close, etc.).
+   - Set up development tools (like opening DevTools in development mode).
+7. **Set up communication between main and renderer processes**:
+   - Use `contextBridge` and `ipcRenderer` in a preload script to expose safe Electron APIs to the renderer process.
+   - Define channels for:
+     - Downloading models
+     - Running inference
+     - Processing documents
+     - Managing history and prompt library
+8. **Test the basic Electron app**:
+   - Run the app in development: `npm start` (which should run both React and Electron).
+### Phase 3: State Management and UI Framework
+9. **Choose and set up state management** (e.g., MobX, Redux, or Zustand). We'll use MobX:
+   - Install MobX and MobX-React: `npm install mobx mobx-react-lite`.
+   - Create a store (or stores) for:
+     - Chat messages (conversation history)
+     - Prompt library
+     - Model management (downloaded models, current model, download progress)
+     - Document processing state
+10. **Set up a UI component library** (optional, but recommended for consistency):
+    - Install Material-UI (MUI) or similar: `npm install @mui/material @emotion/react @emotion/styled`.
+    - Set up a theme and global styles.
+### Phase 4: Model Management
+11. **Implement model downloading from Hugging Face**:
+    - In the main process, write a function to download a model given a model ID or URL.
+    - Use the Hugging Face Transformers.js library or direct HTTP downloads (for ONNX models, for example).
+    - Track download progress and send updates to the renderer process via IPC.
+12. **Implement local model selection**:
+    - Allow the user to browse and select a local model file (`.safetensors` or other supported formats).
+    - Provide a way to manage downloaded models (list, delete).
+13. **Model loading and inference setup**:
+    - In the main process, write code to load the selected model (using ONNX Runtime, Transformers.js, or other).
+    - Configure the model to use GPU (if available) via ONNX Runtime's CUDA/OpenCL or DirectML.
+### Phase 5: Document Processing
+14. **Implement document upload and processing**:
+    - Create a UI component for document upload (PDF, DOCX, TXT, JPEG, PNG).
+    - In the main process, implement functions to extract text from:
+      - PDF: Use `pdf-parse`.
+      - DOCX: Use `mammoth`.
+      - Images: Use `tesseract.js` for OCR.
+      - TXT: Directly read the file.
+    - Send the extracted text to the model as context for the prompt.
+### Phase 6: Chat Interface and Interaction
+15. **Build the chat interface**:
+    - Create a component that displays the conversation (messages from user and AI).
+    - Implement a message input area with:
+      - Text input
+      - Document attachment button
+      - Send button
+    - Style the interface to mimic ChatGPT (clean and user-friendly).
+16. **Implement the inference flow**:
+    - When the user sends a message (with or without a document), the renderer process sends the prompt and document context (if any) to the main process via IPC.
+    - The main process runs the model inference (using the loaded model) and returns the response.
+    - The response is displayed in the chat interface.
+### Phase 7: History Management
+17. **Save conversation history**:
+    - After each interaction, save the prompt and the response in two separate JSON files (prompts.json and responses.json) in the user's data directory.
+    - Each entry should include metadata (timestamp, model used, document reference if any).
+    - Implement functions to load history and display it in the UI (in a separate view or section).
+### Phase 8: Prompt Library
+18. **Implement the prompt library**:
+    - Create a UI component to manage the prompt library (view, add, edit, delete prompts).
+    - Save the prompt library in a JSON file (or in the same user data directory).
+    - Allow the user to select a prompt from the library to insert into the chat input.
+### Phase 9: Model Browser and Selection
+19. **Build the model browser**:
+    - Create a component that allows:
+      - Browsing Hugging Face models (using the Hugging Face API) within the app.
+      - Pasting a model URL for download.
+      - Browsing and selecting local models.
+    - Display download progress when downloading a model.
+### Phase 10: Optimization and Performance
+20. **Optimize for performance**:
+    - Ensure the model uses GPU acceleration (via ONNX Runtime, CUDA, etc.).
+    - Implement model quantization (if not already) to reduce memory and improve speed.
+    - Use streaming for large file processing to avoid blocking the main thread.
+21. **Implement model warm-up**:
+    - Load the model in the background when the app starts (if a model was previously selected) to speed up the first inference.
+### Phase 11: Testing and Debugging
+22. **Write tests**:
+    - Unit tests for utility functions (document processing, history saving).
+    - Integration tests for model downloading and inference.
+    - End-to-end tests for the entire chat flow.
+23. **Debug and profile**:
+    - Use Electron's built-in DevTools for the renderer process.
+    - Use Node.js debugger for the main process.
+    - Profile performance (especially model inference and document processing).
+### Phase 12: Packaging and Distribution
+24. **Package the application**:
+    - Use Electron Forge to package the app for Windows, macOS, and Linux.
+    - Create installers (e.g., .dmg, .exe, .deb).
+25. **Test the packaged application**:
+    - Test on target operating systems.
+    - Verify that the app can access the GPU and run models efficiently.
+### Phase 13: Documentation and Final Touches
+26. **Write user documentation**:
+    - How to download and install the app.
+    - How to download and use models.
+    - How to use the prompt library and document processing.
+27. **Final code review and cleanup**:
+    - Remove debug code.
+    - Optimize and refactor as needed.
+### Phase 14: Continuous Integration and Deployment (Optional)
+28. **Set up CI/CD** (e.g., GitHub Actions):
+    - Automate tests.
+    - Automate building and releasing for different platforms.
+### Notes:
+- **Order of Implementation**: Start with the basic Electron app, then add model management, followed by the chat interface and document processing. History and prompt library can be added next, and finally, optimization and packaging.
+- **Dependencies**: We'll need to manage dependencies carefully, especially native modules (like ONNX Runtime) that require rebuilding for Electron.
+This list is comprehensive and ordered. Each step should be completed before moving to the next for a logical progression. However, some steps (like setting up state management) can be done in parallel with others if the project is divided among multiple developers.
+//think
+
+### Step-by-Step Implementation Plan for Your LLM Desktop Application
+
+#### **Phase 1: Environment Setup & Foundation**
+1. **Install prerequisites**:
+   - Node.js v18+
+   - Python 3.10+ (for model tools)
+   - Git
+   - GPU drivers (NVIDIA CUDA or AMD ROCm)
+
+2. **Create project structure**:
+   ```bash
+   npx create-react-app llm-desktop-app --template typescript
+   cd llm-desktop-app
+   npm install electron electron-forge concurrently wait-on --save-dev
+   ```
+
+3. **Configure Electron-React integration**:
+   - Set up main/renderer process communication
+   - Create preload script for secure IPC
+   - Configure Electron Forge for packaging
+
+#### **Phase 2: Core System Implementation**
+4. **Implement model management**:
+   - Create Hugging Face model browser
+   - Build model downloader with progress tracking
+   - Add local model selector (.safetensors files)
+   - Implement model validation system
+
+5. **Set up inference engine**:
+   - Integrate ONNX Runtime with GPU support
+   - Configure model loading with GPU acceleration
+   - Implement quantization support (FP16/INT8)
+   - Add memory management for large models
+
+6. **Build document processing**:
+   - Create file upload handler (PDF/DOCX/TXT/IMG)
+   - Implement text extraction for PDFs (Poppler)
+   - Set up OCR for images (Tesseract.js)
+   - Add DOCX parsing (Mammoth.js)
+
+#### **Phase 3: Data Management**
+7. **Implement history system**:
+   - Create JSON storage for prompts/responses
+   - Add metadata tracking (timestamps, model info)
+   - Build history viewer interface
+   - Add export/import functionality
+
+8. **Develop prompt library**:
+   - Create prompt template manager
+   - Implement categorization system
+   - Add quick-insert functionality
+   - Build sharing/import system
+
+#### **Phase 4: User Interface**
+9. **Create main application layout**:
+   - Implement responsive sidebar navigation
+   - Build chat interface (message bubbles, input area)
+   - Add model status indicator
+   - Create document upload zone
+
+10. **Develop model browser UI**:
+    - Build Hugging Face model search
+    - Create download progress visualizer
+    - Implement local model browser
+    - Add model information panel
+
+11. **Build history interface**:
+    - Create conversation timeline
+    - Implement search/filter functionality
+    - Add export controls
+    - Build detailed view with metadata
+
+12. **Create prompt library UI**:
+    - Build template gallery
+    - Add category management
+    - Implement template editor
+    - Create quick-insert toolbar
+
+#### **Phase 5: Performance Optimization**
+13. **Implement GPU acceleration**:
+    - Configure ONNX Runtime execution providers
+    - Add GPU memory monitoring
+    - Implement fallback to CPU
+    - Add hardware detection
+
+14. **Optimize inference**:
+    - Implement model quantization
+    - Add streaming response output
+    - Set up model caching
+    - Implement warm-up sequence
+
+15. **Optimize document processing**:
+    - Add file size limits
+    - Implement background processing
+    - Add chunked text extraction
+    - Implement caching for processed files
+
+#### **Phase 6: Quality Assurance**
+16. **Implement testing**:
+    - Add unit tests for core logic
+    - Create integration tests for workflows
+    - Develop performance benchmarks
+    - Implement model compatibility tests
+
+17. **Set up error handling**:
+    - Create global error boundary
+    - Implement model load failure recovery
+    - Add document processing error feedback
+    - Create inference timeout system
+
+#### **Phase 7: Packaging & Distribution**
+18. **Configure application packaging**:
+    - Set up Electron Forge makers
+    - Create platform-specific builds
+    - Implement auto-update system
+    - Add code signing
+
+19. **Prepare installation packages**:
+    - Build Windows installer (MSI)
+    - Create macOS application bundle
+    - Generate Linux packages (DEB/RPM)
+    - Add GPU dependency checks
+
+#### **Phase 8: Deployment & Maintenance**
+20. **Create distribution pipeline**:
+    - Set up automated builds
+    - Implement version management
+    - Create update channels (stable/beta)
+    - Add usage analytics (opt-in)
+
+21. **Prepare documentation**:
+    - Write user manual
+    - Create troubleshooting guide
+    - Develop model compatibility list
+    - Prepare developer documentation
+
+---
+
+### **Critical Path Sequence**
+1. **Week 1**: 
+   - Complete Phase 1 (Setup)
+   - Implement basic Electron-React structure
+   - Set up model download prototype
+
+2. **Week 2**:
+   - Complete Phase 2 (Core Systems)
+   - Build inference engine
+   - Implement document processing core
+
+3. **Week 3**:
+   - Complete Phase 3 (Data Management)
+   - Build history system
+   - Implement prompt library backend
+
+4. **Week 4**:
+   - Complete Phase 4 (UI)
+   - Develop main chat interface
+   - Build model browser UI
+
+5. **Week 5**:
+   - Complete Phase 5 (Optimization)
+   - Implement GPU acceleration
+   - Add performance enhancements
+
+6. **Week 6**:
+   - Complete Phases 6-7 (QA & Packaging)
+   - Implement testing suite
+   - Create installers
+   - Prepare first beta release
+
+7. **Week 7+**:
+   - Complete Phase 8 (Deployment)
+   - Gather user feedback
+   - Iterate on critical issues
+   - Prepare stable release
+
+---
+
+### **Key Dependencies to Install**
+```bash
+npm install @huggingface/inference pdf-parse mammoth.js tesseract.js 
+onnxruntime-node fs-extra electron-store uuid @mui/material 
+react-markdown react-json-view electron-log
+```
+
+---
+
+### **Risk Mitigation Strategies**
+1. **GPU Compatibility Issues**:
+   - Implement multi-backend support (CUDA/DirectML/CPU)
+   - Add automatic fallback to CPU
+   - Create GPU compatibility checker
+
+2. **Large Model Memory Problems**:
+   - Implement model chunking
+   - Add memory warning system
+   - Create automatic quantization
+
+3. **Document Processing Failures**:
+   - Add file size limits
+   - Implement format validation
+   - Create error recovery mechanisms
+
+4. **Cross-platform Challenges**:
+   - Test early on all target OS
+   - Use platform-agnostic libraries
+   - Implement OS-specific workarounds
+
+---
+
+### **Post-Launch Roadmap**
+1. **v1.1**: Add model fine-tuning support
+2. **v1.2**: Implement collaborative prompt libraries
+3. **v1.3**: Add API integration (OpenAI/etc.)
+4. **v2.0**: Implement multimodal support (image generation)
+
+Start with a minimal GPU-compatible model (TinyLlama 1.1B) for initial testing before supporting larger models. Would you like me to elaborate on any specific phase or provide more details about a particular component?
